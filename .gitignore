@@ -1,0 +1,39 @@
+# 虚拟环境（核心，必须忽略）
+.venv/
+venv/
+ENV/
+
+# Python 缓存文件
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py~
+
+# 测试/覆盖率缓存
+.pytest_cache/
+.coverage
+htmlcov/
+.pytest_logs/
+
+# 环境变量配置（后续会用，提前忽略）
+.env
+.env.local
+.env.dev
+.env.prod
+
+# 数据文件（避免大CSV/Excel上传GitHub）
+data/*.csv
+data/*.xlsx
+data/*.txt
+data/*.log
+
+# IDE/编辑器配置
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# 依赖清单（可选，但若手动改了可忽略，建议保留）
+# requirements.txt
