@@ -2,19 +2,17 @@
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
-# black 格式化配置
-[tool.black]
+# black 鏍煎紡鍖栭厤缃?[tool.black]
 line-length = 88
 target-version = ["py310", "py311"]
-extend-exclude = [".venv", "data", "__pycache__"]
+extend-exclude = ".venv|data|__pycache__"
 
-# isort 导入排序配置（兼容black，无冲突）
-[tool.isort]
+# isort 瀵煎叆鎺掑簭閰嶇疆锛堝吋瀹筨lack锛屾棤鍐茬獊锛?[tool.isort]
 profile = "black"
 line_length = 88
 extend_skip_glob = [".venv/*", "data/*", "__pycache__/*"]
 
-# ruff 代码检查+自动修复配置
+# ruff 浠ｇ爜妫€鏌?鑷姩淇閰嶇疆
 [tool.ruff]
 line-length = 88
 extend-exclude = [".venv", "data", "__pycache__", "tests"]
