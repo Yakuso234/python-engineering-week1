@@ -45,3 +45,19 @@ def test_clean_csv_data_correct(temp_test_files):
 
     assert len(cleaned_df) == 1
     assert cleaned_df.iloc[0]["name"] == "张三"
+
+
+# 新增测试3：指定单列去空（只删name列空值）
+def test_clean_csv_specify_single_col(temp_test_files):
+    raw_path, save_path = temp_test_files
+    clean_csv(raw_path, save_path, drop_na_cols=["name"])
+    cleaned_df = pd.read_csv(save_path)
+    assert len(cleaned_df) == 2  # 原始4行，删name空值后剩3行（去重后）
+
+
+# 新增测试4：指定多列去空（删name+age列空值）
+def test_clean_csv_specify_multi_cols(temp_test_files):
+    raw_path, save_path = temp_test_files
+    clean_csv(raw_path, save_path, drop_na_cols=["name", "age"])
+    cleaned_df = pd.read_csv(save_path)
+    assert len(cleaned_df) == 1  # 只保留张三（无空值）

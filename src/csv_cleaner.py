@@ -1,4 +1,4 @@
-"""CSV数据清洗工具最小可运行版本 - Week1周三核心产出"""
+"""CSV数据清洗工具最小可运行版本 - Week1周四核心产出(新增指定去空行)"""
 
 import argparse
 import os
@@ -6,14 +6,17 @@ import os
 import pandas as pd
 
 
-def clean_csv(raw_path: str, save_path: str):
+def clean_csv(raw_path: str, save_path: str, drop_na_cols: list[str] = None):
     # 1. 先读入csv文件
     try:
         df = pd.read_csv(raw_path, encoding="utf-8")
     except Exception:
         df = pd.read_csv(raw_path, encoding="gbk")
     # 2. 去空值
-    df = df.dropna()
+    if drop_na_cols:
+        df = df.dropna(subset=drop_na_cols)
+    else:
+        df = df.dropna()
     # 3. 去重复行
     df = df.drop_duplicates(keep="first")
     # 4. 重置索引
@@ -37,5 +40,15 @@ if __name__ == "__main__":
     parser.add_argument(
         "save_path", help="清洗后csv保存路径，例如：data/cleaned/clean_test.csv"
     )
+    parser.add_argument(
+        "--drop-na-cols",
+        type=str,
+        default=None,
+        help="指定去空值的列，多列用逗号分隔，例如：name，age",
+    )
+
     args = parser.parse_args()
-    clean_csv(args.raw_path, args.save_path)
+
+    drop_na_cols = args.drop_na_cols.split(",") if args.drop_na_cols else None
+
+    clean_csv(args.raw_path, args.save_path, drop_na_cols)
