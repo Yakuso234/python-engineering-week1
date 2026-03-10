@@ -1,37 +1,92 @@
-from fastapi import FastAPI, Depends
+from fastapi import Depends, FastAPI, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from src.task_manage.database import get_db, engine
+
+from src.task_manage.database import Base, engine, get_db
+from src.task_manage.models import Task
+
+# 启动时自动建表（嵌入式SQLite无需手动建库）
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="Week2-用户任务管理API",
-    version="0.1.0",
-    description="FastAPI+PostgreSQL基础版（极简连接验证）"
+    title="任务管理API",
+    version="0.2.0",
+    description="FastAPI + 嵌入式SQLite任务管理系统"
 )
 
-# 接口1：基础健康检查
+
+# ---------- Pydantic 请求/响应模型 ----------
+
+class TaskCreate(BaseModel):
+    title: str
+    description: str | None = None
+
+
+class TaskUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    completed: bool | None = None
+
+
+class TaskOut(BaseModel):
+    id: int
+    title: str
+    description: str | None
+    completed: bool
+
+    model_config = {"from_attributes": True}
+
+
+# ---------- 接口 ----------
+
 @app.get("/")
 def root():
-    return {
-        "msg": "FastAPI服务启动成功！",
-        "下一步": "访问 /db/test 测试数据库连接"
-    }
+    return {"msg": "任务管理API启动成功！", "docs": "/docs"}
 
-# 接口2：极简连接验证（核心！只验证能否获取数据库会话）
-@app.get("/db/test")
-def test_database_connection(db: Session = Depends(get_db)):
-    try:
-        # 不执行任何SQL，只验证能否成功获取数据库会话
-        # 能走到这一步，说明数据库连接已建立
-        return {
-            "msg": "数据库连接成功！✅",
-            "database": "task_manage",
-            "说明": "已成功建立数据库连接（绕开编码查询）",
-            "status": "正常"
-        }
-    except Exception as e:
-        # 只返回错误类型，不解析错误字符串（避开编码解码）
-        return {
-            "msg": "数据库连接失败！❌",
-            "error_type": str(type(e)),
-            "排查方向": "1.PostgreSQL服务是否启动 2.密码是否正确 3.库名是否存在"
-        }
+
+@app.get("/tasks", response_model=list[TaskOut])
+def list_tasks(db: Session = Depends(get_db)):
+    """获取所有任务"""
+    return db.query(Task).all()
+
+
+@app.post("/tasks", response_model=TaskOut, status_code=201)
+def create_task(task_in: TaskCreate, db: Session = Depends(get_db)):
+    """创建新任务"""
+    task = Task(title=task_in.title, description=task_in.description)
+    db.add(task)
+    db.commit()
+    db.refresh(task)
+    return task
+
+
+@app.get("/tasks/{task_id}", response_model=TaskOut)
+def get_task(task_id: int, db: Session = Depends(get_db)):
+    """获取单个任务"""
+    task = db.get(Task, task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="任务不存在")
+    return task
+
+
+@app.put("/tasks/{task_id}", response_model=TaskOut)
+def update_task(task_id: int, task_in: TaskUpdate, db: Session = Depends(get_db)):
+    """更新任务"""
+    task = db.get(Task, task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="任务不存在")
+    for field, value in task_in.model_dump(exclude_unset=True).items():
+        setattr(task, field, value)
+    db.commit()
+    db.refresh(task)
+    return task
+
+
+@app.delete("/tasks/{task_id}", status_code=204)
+def delete_task(task_id: int, db: Session = Depends(get_db)):
+    """删除任务"""
+    task = db.get(Task, task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="任务不存在")
+    db.delete(task)
+    db.commit()

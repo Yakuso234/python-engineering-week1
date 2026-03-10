@@ -35,5 +35,7 @@ data/*.log
 *.swo
 .DS_Store
 
-# 依赖清单（可选，但若手动改了可忽略，建议保留）
-# requirements.txt
+# SQLite数据库文件
+*.db
+*.sqlite
+*.sqlite3

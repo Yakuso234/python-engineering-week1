@@ -1,16 +1,24 @@
+import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-# 关键：添加?client_encoding=utf8，强制UTF-8编码连接
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:1979810@localhost:5432/task_manage?client_encoding=utf8"
-
-# 创建引擎时，再显式指定编码（兜底）
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"options": "-c client_encoding=utf8"}  # 强制客户端编码
+# 嵌入式SQLite数据库（默认），也可通过环境变量切换至PostgreSQL
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "sqlite:///./task_manage.db"
 )
 
+# SQLite需要check_same_thread=False；PostgreSQL不需要此参数
+connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+class Base(DeclarativeBase):
+    pass
+
 
 def get_db():
     db = SessionLocal()
